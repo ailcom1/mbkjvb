@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>حسابك الشخصي</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #8e44ad, #f39c12);
+            margin: 0; padding: 0;
+            direction: rtl; text-align: center;
+            height: 100vh; overflow-x: hidden;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .profile-container {
+            width: 100%; max-width: 400px; height: auto;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.6));
+            border-radius: 15px; padding: 20px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .profile-image {
+            width: 100px; height: 100px; border-radius: 50%;
+            overflow: hidden; margin-bottom: 15px;
+            border: 3px solid #8e44ad;
+            position: relative;
+        }
+        .profile-image img { width: 100%; height: 100%; object-fit: cover; }
+        .edit-icon {
+            background-color: #8e44ad; color: white;
+            width: 25px; height: 25px; display: inline-flex;
+            justify-content: center; align-items: center;
+            border-radius: 50%; cursor: pointer;
+            border: 2px solid white; position: absolute;
+            top: 70px; right: 10px;
+        }
+        .upload-button, .verify-button {
+            margin-top: 10px; padding: 10px 20px;
+            border: none; border-radius: 5px; cursor: pointer;
+            font-size: 16px; color: white; transition: background-color 0.3s, transform 0.2s;
+        }
+        .upload-button { background-color: #f39c12; }
+        .upload-button:hover { background-color: #e67e22; transform: scale(1.05); }
+        .sections { margin-top: 15px; text-align: right; width: 100%; flex-grow: 1; }
+        .section {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px; background-color: #8e44ad;
+            border-radius: 10px; margin-bottom: 20px; color: white; font-size: 16px; position: relative;
+        }
+        .section:hover { background-color: #732d91; }
+        .power-button { margin-top: 20px; }
+        .power-button img { width: 45px; height: 45px; transition: transform 0.3s ease; }
+        .power-button img:hover { transform: scale(1.1); }
+        .verification-code { display: none; margin-top: 10px; }
+        .verificationStatus {
+            display: none; position: relative; background-color: #2196F3;
+            border-radius: 50%; width: 25px; height: 25px;
+            display: flex; justify-content: center; align-items: center;
+            margin-left: 5px; border: 2px solid white;
+        }
+        .verificationStatus::after {
+            content: "✔️"; color: white; font-size: 16px;
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            display: flex; justify-content: center; align-items: center;
+        }
+        @media (max-width: 600px) {
+            .section { font-size: 14px; padding: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="profile-container">
+        <div class="profile-image" id="profileImage">
+            <img src="" alt="Profile Picture">
+            <div class="edit-icon" onclick="showNameInput()">✏️</div>
+        </div>
+        <button class="upload-button" onclick="document.getElementById('fileInput').click()">تحميل صورة</button>
+        <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="loadImage(event)">
+        
+        <div class="sections">
+            <div class="section">
+                <span>اسم المستخدم:</span>
+                <span id="usernameDisplay">أبن البيك</span>
+                <span id="verificationStatus" class="verificationStatus"></span>
+            </div>
+            <div class="section"><span>الاحاله:</span><span id="referralCode"></span></div>
+            <div class="section"><span>البريد الإلكتروني:</span><span></span></div>
+        </div>
+
+        <button class="verify-button" onclick="showVerificationInput()">توثيق حسابك</button>
+        <div class="verification-code" id="verificationCodeInput">
+            <input type="text" id="codeInput" placeholder="أدخل كود التوثيق">
+            <button onclick="verifyCode()">تحقق</button>
+        </div>
+
+        <div class="power-button">
+            <img src="power_icon.png" alt="Power Button">
+        </div>
+
+        <div id="nameInput" style="display: none; margin-top: 10px;">
+            <input type="text" id="newUsername" placeholder="أدخل اسم المستخدم الجديد">
+            <button onclick="changeUsername()">تغيير الاسم</button>
+        </div>
+    </div>
+    <script>
+        function generateReferralCode() {
+            return Array.from({length: 11}, () => Math.floor(Math.random() * 10)).join('');
+        }
+        function displayReferralCode() {
+            let referralCode = localStorage.getItem('referralCode') || generateReferralCode();
+            localStorage.setItem('referralCode', referralCode);
+            document.getElementById('referralCode').textContent = referralCode;
+        }
+        function loadImage(event) {
+            const profileImage = document.getElementById('profileImage').querySelector('img');
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    profileImage.src = e.target.result;
+                    localStorage.setItem('profileImage', e.target.result);
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+        function restoreProfileImage() {
+            const profileImage = document.getElementById('profileImage').querySelector('img');
+            const storedImage = localStorage.getItem('profileImage');
+            if (storedImage) profileImage.src = storedImage;
+        }
+        function showVerificationInput() {
+            document.getElementById('verificationCodeInput').style.display = 'flex';
+        }
+        function verifyCode() {
+            const codeInput = document.getElementById('codeInput').value;
+            if (codeInput === '780') {
+                document.getElementById('verificationStatus').style.display = 'flex';
+                alert('تم التوثيق بنجاح!');
+            } else {
+                alert('كود التوثيق غير صحيح.');
+            }
+        }
+        function showNameInput() {
+            document.getElementById('nameInput').style.display = 'flex';
+        }
+        function changeUsername() {
+            const newUsername = document.getElementById('newUsername').value;
+            if (newUsername) {
+                localStorage.setItem('username', newUsername);
+                document.getElementById('usernameDisplay').textContent = newUsername;
+                document.getElementById('nameInput').style.display = 'none';
+            } else {
+                alert('يرجى إدخال اسم صحيح.');
+            }
+        }
+        function restoreUsername() {
+            const storedUsername = localStorage.getItem('username') || 'أبن البيك';
+            document.getElementById('usernameDisplay').textContent = storedUsername;
+        }
+        window.onload = function() {
+            displayReferralCode();
+            restoreProfileImage();
+            restoreUsername();
+        };
+    </script>
+</body>
+</html>
